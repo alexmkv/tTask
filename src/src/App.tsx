@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import './App.css';
+import { get, set } from 'idb-keyval';
 
 function uuidv4() {
-  //@ts-ignore
-  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-  );
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }
 
 interface Task {
@@ -22,22 +23,39 @@ function createTask(text: string) {
 
 function NewTask(props: any) {
   let [val, setVal] = useState('');
+  const onAdd = ()=>{props.onAdd(val); setVal('');}
   return <>
-  <input value={val} onChange={(ev:any)=>setVal(ev.target.value)}/>
-  <div onClick={()=>{props.onAdd(val); setVal('');}}>+</div></>;
+  <input value={val} onChange={(ev:any)=>setVal(ev.target.value)} onKeyDown={(e:any)=>{
+    (e.key === "Enter") && onAdd();}} />
+  <div onClick={onAdd}>+</div></>;
 }
 
 function Task(props: any) {
   return <div>{props.task.text}</div>
 }
 
+async function getTasks():Promise<Task[]> 
+{
+  return get('tasks') as any;
+}
+
+const gtasks = getTasks();
+
 const App: React.FC = () => {
-  let [tasks, setTasks] = useState([{}] as Task[]);
+  let [tasks, setTasks] = useState(undefined as (Task[]|undefined));
+  if (tasks == undefined) {
+    gtasks.then((v:any)=>{
+      if (!Array.isArray(v)) v = [];
+      setTasks(v);
+    })
+  }
+  const ts = (tasks || []) as Task[];
+  
   return (
     <div className="App">
       tTask<>
-      {tasks.map((t) => <Task key={t.id} task={t} />)}</>
-      <NewTask onAdd={(v:any) => { setTasks(tasks.concat([createTask(v)]));}}/>
+      {ts.map((t) => <Task key={t.id} task={t} />)}</>
+      <NewTask onAdd={(v:any) => { let na = ts.concat([createTask(v)]); set('tasks', na); setTasks(na);}} />
     </div>
   );
 }
