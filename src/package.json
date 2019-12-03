@@ -8,6 +8,7 @@
     "@types/node": "12.12.11",
     "@types/react": "16.9.11",
     "@types/react-dom": "16.9.4",
+    "dropbox": "^4.0.30",
     "idb-keyval": "^3.2.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
